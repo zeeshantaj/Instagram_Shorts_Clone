@@ -14,14 +14,20 @@ import android.widget.VideoView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.short_video_app.ExoPlayerView;
 import com.example.short_video_app.Model.Video_Data;
 import com.example.short_video_app.R;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.ui.StyledPlayerView;
 
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
+
     private List<Video_Data> videoDataList;
 
     public VideoAdapter(List<Video_Data> videoDataList) {
@@ -41,12 +47,21 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> 
         holder.profileName.setText(data.getProfileName());
         holder.caption.setText(data.getCaption());
 
-        Uri uri = Uri.parse(data.getVideoUrl());
-        holder.videoView.setVideoURI(uri);
-       // holder.mediaController.setAnchorView(holder.videoView);
-       // holder.mediaController.setMediaPlayer(holder.videoView);
-        //holder.videoView.setMediaController(holder.mediaController);
-        holder.videoView.start();
+        SimpleExoPlayer player = new SimpleExoPlayer.Builder(holder.itemView.getContext()).build();
+        holder.playerView.setPlayer(player);
+
+        MediaItem mediaItem = MediaItem.fromUri(videoDataList.get(position).getVideoUrl());
+        player.setMediaItem(mediaItem);
+        player.prepare();
+        player.setPlayWhenReady(false); // Start with playback paused
+
+        // Store player instance in ViewHolder
+        holder.setPlayer(player);
+
+//        MediaItem mediaItem = MediaItem.fromUri(data.getVideoUrl());
+//        holder.player.setMediaItem(mediaItem);
+//        holder.player.prepare();
+//        holder.player.setPlayWhenReady(true);
 
 
 
@@ -80,9 +95,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> 
         private ImageView profileImage2;
         private boolean isLiked = false;
         private boolean isFollow = false;
-
-        private VideoView videoView;
-        private MediaController mediaController;
+        private ExoPlayer player;
+        private StyledPlayerView playerView;
 
         //private String videoUrl = "https://media.geeksforgeeks.org/wp-content/uploads/20201217192146/Screenrecorder-2020-12-17-19-17-36-828.mp4?_=1";
         //private String videoUrl = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4";
@@ -95,9 +109,11 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> 
             profileImage2 = itemView.findViewById(R.id.profileImg);
             comment = itemView.findViewById(R.id.comment);
             likeBtn = itemView.findViewById(R.id.likeBtn);
-            videoView = itemView.findViewById(R.id.videoView);
             followBtn = itemView.findViewById(R.id.followBtn);
-            mediaController = new MediaController(itemView.getContext());
+
+            playerView = itemView.findViewById(R.id.player_view);
+            player= new ExoPlayer.Builder(itemView.getContext()).build();
+            playerView.setPlayer(player);
 
 
             followBtn.setOnClickListener(v -> {
@@ -130,6 +146,22 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> 
                 }
             });
 
+        }
+
+        public void setPlayer(SimpleExoPlayer player) {
+            this.player = player;
+        }
+
+        public void play() {
+            if (player != null) {
+                player.setPlayWhenReady(true);
+            }
+        }
+
+        public void pause() {
+            if (player != null) {
+                player.setPlayWhenReady(false);
+            }
         }
     }
 }
